@@ -1,34 +1,28 @@
-import 'dart:async';
-
+import 'package:crud_perpustakaan/book_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:crud_perpustakaan/home_page.dart';
 
 class AddBookPage extends StatefulWidget {
   const AddBookPage({super.key});
 
   @override
-  State<AddBookPage> createState() => _AddBookPageState(); // Karena stateful, maka harus membuat state
+  State<AddBookPage> createState() => _AddBookPage();
 }
 
-class _AddBookPageState extends State<AddBookPage> {
-  final _formKey = GlobalKey<FormState>(); //id
-  final TextEditingController _titleController = TextEditingController(); //title
-  final TextEditingController _authorController = TextEditingController(); //author
-  final TextEditingController _descriptionController = TextEditingController(); //deskripsi
+class _AddBookPage extends State<AddBookPage> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _authorController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
 
-  Future<void> _addBook(context) async {
-    // Validasi form
+  Future _addBook(context) async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    // Mengambil nilai dari controller
     final title = _titleController.text;
     final author = _authorController.text;
     final description = _descriptionController.text;
-
-    // Kirim data ke tabel 'books' di Supabase
     final response = await Supabase.instance.client.from('books').insert({
       'title': title,
       'author': author,
@@ -36,75 +30,95 @@ class _AddBookPageState extends State<AddBookPage> {
     });
 
     if (response != null) {
+      //Jika ada error tampilkan pesan
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Failed to add book: ${response.error!.message}')),
+        // ignore: unnecessary_brace_in_string_interps
+        SnackBar(content: Text('Error: ${response}')),
       );
     } else {
-      // Jika sukses, tampilkan pesan dan kosongkan form
+      //Jika success tampilkan pesan dan kosongkan form
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Book added successfully')));
+        const SnackBar(content: Text("The Book Added Successfully")),
+      );
       _titleController.clear();
       _authorController.clear();
       _descriptionController.clear();
     }
-    //  Kembali ke halaman utama dan kirimkan status true
     Navigator.pop(context, true);
-
-    // Refresh data buku
     Navigator.pushReplacement(
-      context, 
-      MaterialPageRoute(builder: (context) => const BookListPage())
+      context,
+      MaterialPageRoute(builder: (context) => const BookListPage()),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add New Book')),
+      appBar: AppBar(
+        title: const Text("Add New Book"),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.chevron_left),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
       body: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16.0),
         child: Form(
-          key: _formKey,
+          key: _formKey, // Gunakan _formKey untuk validasi
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  border: UnderlineInputBorder(),
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter the title';
+                    return 'Please enter a title';
                   }
                   return null;
                 },
               ),
+              const SizedBox(height: 16.0),
               TextFormField(
                 controller: _authorController,
-                decoration: const InputDecoration(labelText: 'Author'),
-                validator: (value) { // AGar ketika tidak diisi muncul pesan 
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter the author';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Description'),
+                decoration: const InputDecoration(
+                  labelText: 'Author',
+                  border: UnderlineInputBorder(),
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter the description';
+                    return 'Please enter an author';
                   }
                   return null;
                 },
               ),
-              const SizedBox(
-                height: 20,
+              const SizedBox(height: 16.0),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  border: UnderlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a description';
+                  }
+                  return null;
+                },
               ),
-              ElevatedButton(
-                onPressed: () => _addBook(context),
-                child: const Text('Add Book'),
-              )
+              const SizedBox(height: 24.0),
+              Center(
+                child: ElevatedButton(
+                  onPressed: () => _addBook(context),
+                  child: const Text('Add Book'),
+                ),
+              ),
             ],
           ),
         ),
